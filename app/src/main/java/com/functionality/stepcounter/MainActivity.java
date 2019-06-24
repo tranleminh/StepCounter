@@ -40,6 +40,9 @@ import static com.database.RecordTab.Record._ID;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, com.listener.StepListener {
+
+    /**********Attributes and global variables are declared here***************/
+
     private TextView textView;
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
@@ -47,13 +50,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
     private int numSteps = 0;
     private int currentTick = 0;
+    private int maxTick = 3;
+    private int old_nb_step = 0;
     private double dist = 0;
     private long time = 0;
     private TextView TvSteps;
     private TextView Status;
     private TextView Distance;
     private TextView Log;
-    //private TextView Timing;
     private Button BtnStart;
     private Button BtnStop;
     private Chronometer Timing;
@@ -64,43 +68,107 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int speed = 0;
     private Date start;
     private Date end;
-    private boolean dateLock = true;
+    private boolean dateLock = false;
     private boolean dbLock = true;
     private Button BtnViewData;
+    DatabaseHelper recordDB;
 
-    DatabaseHelper recordDB;// = new DatabaseHelper(this);
 
-    //recordDB = new DatabaseHelper(this);
+    /******Methods relative to step counter's walking data management*******/
 
-    /*public boolean addData(String date, String starttime, String endtime, String steps, String distance, String duration, String avgspeed) {
-        DatabaseHelper recordDB = new DatabaseHelper(this);
-        SQLiteDatabase db = recordDB.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(RecordTab.Record.COL2, date);
-        contentValues.put(RecordTab.Record.COL3, starttime);
-        contentValues.put(RecordTab.Record.COL4, endtime);
-        contentValues.put(RecordTab.Record.COL5, steps);
-        contentValues.put(RecordTab.Record.COL6, distance);
-        contentValues.put(RecordTab.Record.COL7, duration);
-        contentValues.put(RecordTab.Record.COL8, avgspeed);
 
-        long result = db.insert(TABLE_NAME, null, contentValues);
-        //db.close();
-
-        if (result == -1) {
-            return false;
-        } else {
-            return true;
+    /***********************************************************************
+     METHOD startChrono() : start the chronometer that computes walking time
+     ***********************************************************************/
+    public void startChrono() {
+        if (!running) {
+            Timing.setBase(SystemClock.elapsedRealtime() - pauseOffset);
+            Timing.start();
+            running = true;
         }
-    }*/
-
-    public Cursor showData() {
-        DatabaseHelper recordDB = new DatabaseHelper(this);
-        SQLiteDatabase db = recordDB.getWritableDatabase();
-        Cursor data = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
-        return data;
     }
 
+    /***********************************************************************
+     METHOD stopChrono() : stop the chronometer that computes walking time
+     ***********************************************************************/
+    public void stopChrono() {
+        if (running) {
+            Timing.stop();
+            pauseOffset = SystemClock.elapsedRealtime() - Timing.getBase();
+            running = false;
+        }
+    }
+
+    /***********************************************************************
+     METHOD resetChrono() : reset the chronometer that computes walking time
+     ***********************************************************************/
+    public void resetChrono() {
+        Timing.setBase(SystemClock.elapsedRealtime());
+        pauseOffset = 0;
+    }
+
+    /***********************************************************************
+     METHOD resetAll() : reset to 0 all measuring data and reset chronometer
+     ***********************************************************************/
+    private void resetAll() {
+        numSteps = 0;
+        dist = 0;
+        speed = 0;
+        old_nb_step = 0;
+        currentTick = 0;
+        resetChrono();
+    }
+
+
+    /************************Private methods relative to unit conversion***************************/
+
+    /***********************************************************************************************
+     METHOD time_conv() : converts a given time in seconds into a string of hours, minutes, seconds.
+     ***********************************************************************************************/
+    private String time_conv(double time) {
+        String res = "";
+        int s = (int)(time/1000f);
+        int m = 0;
+        int h = 0;
+        if (s < 60) {
+            res+= s + "s";
+        }
+        else {
+            if (s >= 60 && s < 3600) {
+                m = s/60;
+                s = s%60;
+                res += m + "m" + s + "s";
+            }
+            else {
+                h = s/3600;
+                m = (s%3600)/60;
+                s = (s%3600)%60;
+                res += h + "h" + m + "m" + s + "s";
+            }
+        }
+        return res;
+    }
+
+    /***********************************************************************************
+     METHOD dist_conv() : converts a given distance in meters into kilometers if needed.
+     ***********************************************************************************/
+    private String dist_conv(double dist) {
+        String res = "";
+        if (dist < 1000) {
+            res += dist + "m";
+        }
+        else {
+            res += dist/1000f + "km";
+        }
+        return res;
+    }
+
+
+    /****************Methods relative to database's manipulation*****************/
+
+    /*****************************************************************************
+    METHOD viewData() : display the database by pressing the "View Record" button
+     *****************************************************************************/
     public void viewData() {
         BtnViewData.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -127,6 +195,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
     }
 
+
+    /****************************************************************************************************************************
+    METHOD display() : an auxiliary method used in viewData(). This method creates an alert dialog to show database' stored data.
+    ****************************************************************************************************************************/
     public void display(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -135,11 +207,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         builder.show();
     }
 
+
+
+    /****************Main Android methods' implementation*****************/
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Instantiate the database
         recordDB = new DatabaseHelper(this);
 
         // Get an instance of the SensorManager
@@ -162,51 +239,85 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Timing.setFormat("Walked Time: %s");
         Timing.setBase(SystemClock.elapsedRealtime());
 
+        //CLK is the app's common chronometer, used in computing walking time and number of steps every clock's tick.
         CLK = (Chronometer) findViewById(R.id.clk);
-
         CLK.setBase(SystemClock.elapsedRealtime());
         CLK.start();
 
+        //"View Record" button function called here
         viewData();
 
+        //Every clock's tick, start date, end date, walking time and walking speed are updated
         CLK.setOnChronometerTickListener(new Chronometer.OnChronometerTickListener() {
             @Override
             public void onChronometerTick(Chronometer chronometer) {
+                //Instantiate date format
                 SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss");
                 SimpleDateFormat date = new SimpleDateFormat("EEE, dd MM YYYY");
 
-                //Date start = Calendar.getInstance().getTime();
-                //Date end;
-                if (currentTick < numSteps) {
+                //Compare between the current number of steps and the number of steps from previous clock's tick.
+                //If they are different, continue to compute walking time and walking speed
+                //Else, proceed to the next part to compute end time and insert new data to database
+                if (old_nb_step != numSteps) {
+
+                    //variable dateLock served as a pseudo-mutex to make sure only one instance of start time is computed at the beginning of each record
                     if (!dateLock) {
                         start = Calendar.getInstance().getTime();
                         dateLock = true;
                     }
+
+                    //Computing walking time and walking speed
                     startChrono();
                     time = SystemClock.elapsedRealtime() - Timing.getBase();
+                    //Speed = Distance / Time. Initially speed is calculated in meters/second, converted to kilometers/hour by multiplying with 3.6
                     speed = (int) (dist / ((double) time / 1000) * 3.6);
                     Speed.setText("Walking speed : " + speed + "km/h");
-                    currentTick+= 2;
+
+                    //Updating old number of steps
+                    old_nb_step = numSteps;
+
                     dbLock = false;
+
+                    //currentTick served as the number of seconds consecutive the person is not moving, i.e numSteps are not increasing. If numSteps are changing, currentTick is reset to 0.
+                    currentTick = 0;
+
                 }
+
                 else {
-                    stopChrono();
-                    if (dateLock) {
-                        end = Calendar.getInstance().getTime();
-                        dateLock = false;
+                    //If the person is not moving, the app checks if the person has reached the maxTick value so it updates currentTick or proceeds to the next part.
+                    if (currentTick < maxTick) {
+                        currentTick++;
                     }
-                    if (start != null) {
-                        Log.setText("Today is " + date.format(start) +", User walks from " + df.format(start) + " to " + df.format(end) + " for " + Double.toString(speed) + " km/h");
-                        if (!dbLock) {
-                            boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), Double.toString(dist) + "m", Double.toString(time/1000f) + "s", Double.toString(speed) + "km/h");
-                            if (insertData) {
-                                Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
-                            }
-                            else {
-                                Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
-                            }
-                            dbLock = true;
+
+                    //If the person has already not moved for maxTick seconds, end time is computed and new data is inserted into the database
+                    else {
+                        //dateLock to make sure only one instance of end time is computed at the end of a record.
+                        if (dateLock) {
+                            end = Calendar.getInstance().getTime();
+                            dateLock = false;
                         }
+                        stopChrono();
+                        if (start != null) {
+                            //Log used for debugging, change its visibility on activity_main.xml if needed
+                            Log.setText("Today is " + date.format(start) + ", User walks from " + df.format(start) + " to " + df.format(end) + " for " + Double.toString(speed) + " km/h");
+
+                            //dbLock to make sure only one instance of data is computed during a record
+                            if (!dbLock) {
+                                boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time), Double.toString(speed) + "km/h");
+                                if (insertData) {
+                                    Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
+                                }
+                                dbLock = true;
+                            }
+
+                            //reset all measurements at the end of the record
+                            resetAll();
+                        }
+
+                        //reset the currentTick counter
+                        currentTick = 0;
                     }
 
                 }
@@ -223,18 +334,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Status.setText("Counter started");
                 }
                 else {
+                    //Click again on start button to reset all measurements
                     Status.setText("Counter reset");
-                    numSteps = 0;
-                    dist = 0;
-                    speed = 0;
-                    currentTick = 0;
-                    resetChrono();
+                    resetAll();
                 }
-                //chrono.start();
                 startChrono();
                 TvSteps.setText(TEXT_NUM_STEPS + numSteps);
                 Distance.setText("Walked distance : " + dist + "m");
-                //Timing.setText(chrono.getFormat());
 
                 sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 
@@ -251,51 +357,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stopChrono();
                 Status.setText("Counter stopped");
 
-
             }
         });
 
-    }
-
-    /*private void viewData() {
-        SQLiteDatabase db = recordDB.getReadableDatabase();
-
-        String[] projection = {
-                _ID,
-                COL2,
-                COL3,
-                COL4,
-                COL5,
-                COL6,
-                COL7,
-                COL8
-        };
-
-        Cursor cursor = db.query(TABLE_NAME, projection, "*", null, null, null, null);
-
-
-
-    }*/
-
-    public void startChrono() {
-        if (!running) {
-            Timing.setBase(SystemClock.elapsedRealtime() - pauseOffset);
-            Timing.start();
-            running = true;
-        }
-    }
-
-    public void stopChrono() {
-        if (running) {
-            Timing.stop();
-            pauseOffset = SystemClock.elapsedRealtime() - Timing.getBase();
-            running = false;
-        }
-    }
-
-    public void resetChrono() {
-        Timing.setBase(SystemClock.elapsedRealtime());
-        pauseOffset = 0;
     }
 
     @Override
@@ -312,9 +376,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void step(long timeNs){
-        long t = 0;
         numSteps++;
         Status.setText("Counter started");
+
+        //Walking distance calculation by multiplying a step with an average value of 75cm per step
         dist = numSteps * 0.75;
         TvSteps.setText(TEXT_NUM_STEPS + numSteps);
         if (dist <= 1000) {
@@ -323,7 +388,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         else {
             Distance.setText("Walked distance : " + dist / 1000f + "km");
         }
-        //+startChrono();
     }
 
 
