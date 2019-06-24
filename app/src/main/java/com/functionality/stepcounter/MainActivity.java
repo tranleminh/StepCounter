@@ -28,7 +28,15 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import static com.database.RecordTab.Record.COL2;
+import static com.database.RecordTab.Record.COL3;
+import static com.database.RecordTab.Record.COL4;
+import static com.database.RecordTab.Record.COL5;
+import static com.database.RecordTab.Record.COL6;
+import static com.database.RecordTab.Record.COL7;
+import static com.database.RecordTab.Record.COL8;
 import static com.database.RecordTab.Record.TABLE_NAME;
+import static com.database.RecordTab.Record._ID;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, com.listener.StepListener {
@@ -86,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }*/
 
-    /*public Cursor showData() {
+    public Cursor showData() {
         DatabaseHelper recordDB = new DatabaseHelper(this);
         SQLiteDatabase db = recordDB.getWritableDatabase();
         Cursor data = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
@@ -97,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         BtnViewData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Cursor data = record.showData();
+                Cursor data = recordDB.showData();
 
                 if (data.getCount() == 0) {
                     display("Error", "No Data Found!");
@@ -113,9 +121,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     buffer.append("Duration: " + data.getString(6) + "\n");
                     buffer.append("AvgSpeed: " + data.getString(7) + "\n");
                     buffer.append("--------------------------------------\n");
-
-                    display("All Stored Data:", buffer.toString());
                 }
+                display("All Stored Data:", buffer.toString());
             }
         });
     }
@@ -126,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         builder.setTitle(title);
         builder.setMessage(message);
         builder.show();
-    }*/
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         CLK.setBase(SystemClock.elapsedRealtime());
         CLK.start();
 
-        //viewData();;
+        viewData();
 
         CLK.setOnChronometerTickListener(new Chronometer.OnChronometerTickListener() {
             @Override
@@ -249,6 +256,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
     }
+
+    /*private void viewData() {
+        SQLiteDatabase db = recordDB.getReadableDatabase();
+
+        String[] projection = {
+                _ID,
+                COL2,
+                COL3,
+                COL4,
+                COL5,
+                COL6,
+                COL7,
+                COL8
+        };
+
+        Cursor cursor = db.query(TABLE_NAME, projection, "*", null, null, null, null);
+
+
+
+    }*/
 
     public void startChrono() {
         if (!running) {

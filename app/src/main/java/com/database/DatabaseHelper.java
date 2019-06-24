@@ -40,12 +40,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    /*public Cursor showData() {
+    public Cursor showData() {
         //DatabaseHelper recordDB = new DatabaseHelper(this);
-        SQLiteDatabase db = db.getWritableDatabase();
+        SQLiteDatabase db = this.getWritableDatabase();
         Cursor data = db.rawQuery("SELECT * FROM " + RecordTab.Record.TABLE_NAME, null);
         return data;
-    }*/
+    }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -102,4 +102,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             return true;
         }
     }
+
+
 }
