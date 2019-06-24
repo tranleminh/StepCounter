@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int maxTick = 3;
     private int old_nb_step = 0;
     private double dist = 0;
-    private long time = 0;
+    private int time = 0;
     private TextView TvSteps;
     private TextView Status;
     private TextView Distance;
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private long pauseOffset = 0;
     private boolean running = false;
     private TextView Speed;
-    private int speed = 0;
+    private double speed = 0;
     private Date start;
     private Date end;
     private boolean dateLock = false;
@@ -125,27 +125,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     /***********************************************************************************************
      METHOD time_conv() : converts a given time in seconds into a string of hours, minutes, seconds.
      ***********************************************************************************************/
-    private String time_conv(double time) {
+    private String time_conv(int time) {
         String res = "";
-        int s = (int)(time/1000f);
+        int s = time;
         int m = 0;
         int h = 0;
-        if (s < 60) {
-            res+= s + "s";
+        /*if (s == 0) {
+            res = "1s";
         }
-        else {
+        else {*/
+        if (s < 60) {
+            res += s + "s";
+        } else {
             if (s >= 60 && s < 3600) {
-                m = s/60;
-                s = s%60;
+                m = s / 60;
+                s = s % 60;
                 res += m + "m" + s + "s";
-            }
-            else {
-                h = s/3600;
-                m = (s%3600)/60;
-                s = (s%3600)%60;
+            } else {
+                h = s / 3600;
+                m = (s % 3600) / 60;
+                s = (s % 3600) % 60;
                 res += h + "h" + m + "m" + s + "s";
             }
         }
+        //}
         return res;
     }
 
@@ -159,6 +162,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         else {
             res += dist/1000f + "km";
+        }
+        return res;
+    }
+
+    /**************************************************************
+     METHOD speed_conv() : converts a given speed into proper form.
+     **************************************************************/
+    private String speed_conv(double speed) {
+        String res = "";
+        if (speed - (int)speed >= 0.5) {
+            res += ((int)speed + 1) + "km/h";
+        }
+        else {
+            res += (int)speed + "km/h";
         }
         return res;
     }
@@ -268,10 +285,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                     //Computing walking time and walking speed
                     startChrono();
-                    time = SystemClock.elapsedRealtime() - Timing.getBase();
+                    time = (int)((SystemClock.elapsedRealtime() - Timing.getBase())/1000f)+1;
                     //Speed = Distance / Time. Initially speed is calculated in meters/second, converted to kilometers/hour by multiplying with 3.6
-                    speed = (int) (dist / ((double) time / 1000) * 3.6);
-                    Speed.setText("Walking speed : " + speed + "km/h");
+                    speed = (dist / (float)time) * 3.6;
+                    Speed.setText("Walking speed : " + speed_conv(speed));
 
                     //Updating old number of steps
                     old_nb_step = numSteps;
@@ -303,7 +320,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                             //dbLock to make sure only one instance of data is computed during a record
                             if (!dbLock) {
-                                boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time), Double.toString(speed) + "km/h");
+                                boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time), speed_conv(speed));
                                 if (insertData) {
                                     Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
                                 } else {
