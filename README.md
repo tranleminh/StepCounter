@@ -13,7 +13,7 @@ There are three buttons on the UI : Start, Stop and View Record
 - The Stop button stops the step counter, as well as the walking time's chronometer
 - The View Record button is used to display all the recorded data.
 
-#Functionalities by version :
+# Functionalities by version :
 1.00 :
 - Steps are detected using smartphone's accelerometer
 - Distance is computed by multiplying the number of steps with a step's average length of 75cm.
@@ -23,6 +23,6 @@ There are three buttons on the UI : Start, Stop and View Record
 - Using SQLite Database
 - Data displayed in textual form contained in an alert dialog
 
-#Changelogs :
+# Changelogs :
 1.00 : 
 - Step Counter's prototype released
