@@ -6,7 +6,7 @@ This Step Counter is capable of computing :
 - Walked distance
 - Walking time
 - Walking average speed
-- Record the start time and the end time of each walking period
+- The start time and the end time of each walking period
 
 There are three buttons on the UI : Start, Stop and View Record
 - Once clicking the Start button, the app will start to record users' walking data. It can automatically detect when user stop walking, until 3 seconds, the app stop recording data and insert it into the database.
