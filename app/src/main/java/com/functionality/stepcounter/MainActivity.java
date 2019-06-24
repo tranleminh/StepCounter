@@ -2,6 +2,8 @@ package com.functionality.stepcounter;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
@@ -19,10 +21,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.database.DatabaseHelper;
-import com.database.RecordTab;
 import com.functionality.stepdetector.*;
 
-import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -228,6 +228,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     /****************Main Android methods' implementation*****************/
 
+    /**
+     *
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
