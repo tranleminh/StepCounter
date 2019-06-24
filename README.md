@@ -1,8 +1,8 @@
 # This Step Counter application is created within the scope of my internship at IMT Mines Ales on the subject of Burnout Syndrome Detection using Smartphones' data
 # Current Version : 1.00
 
-This Step Counter is capable of : 
-- Count the number of steps a person has walked
+This Step Counter is capable of computing : 
+- The number of steps a person has walked
 - Walked distance
 - Walking time
 - Walking average speed
