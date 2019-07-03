@@ -1,5 +1,5 @@
 # This Step Counter application is created within the scope of my internship at IMT Mines Ales on the subject of Burnout Syndrome Detection using Smartphones' data
-# Current Version : 1.00b
+# Current Version : 1.01
 
 This Step Counter is capable of computing : 
 - The number of steps a person has walked
@@ -24,6 +24,10 @@ There are three buttons on the UI : Start, Stop and View Record
 - Data displayed in textual form contained in an alert dialog
 
 # Changelogs :
+1.01:
+- Walking time is no longer computed with a count-up chronometer. 
+- Change the way walking time is calculated using only System Time.
+
 1.00b:
 - Reworked walking time measurement that had an impact on speed calculation. The measured walking time will now be rounded up to the nearest integer value.
 
