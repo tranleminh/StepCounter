@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     /**********Attributes and global variables are declared here***************/
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
-    private static final int SPEED_THRESHOLD = 6;
+    private static final int SPEED_THRESHOLD = 20;
 
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
@@ -57,6 +57,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Date end;
     private boolean dateLock = false;
     private boolean dbLock = true;
+    private long timeBase = System.currentTimeMillis();
+    private TextView Timer;
+    private int time2;
     private Button BtnViewData;
     private DatabaseHelper recordDB;
 
@@ -64,8 +67,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     /******Methods relative to step counter's walking data management*******/
 
     /**
+     * Deprecated since 1.01. No longer used
      * Start the chronometer that computes walking time
      */
+    @Deprecated
     private void startChrono() {
         if (!running) {
             Timing.setBase(SystemClock.elapsedRealtime() - pauseOffset);
@@ -75,8 +80,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     /**
+     * Deprecated since 1.01. No longer used
      * Stop the chronometer that computes walking time
      */
+    @Deprecated
     private void stopChrono() {
         if (running) {
             Timing.stop();
@@ -86,8 +93,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     /**
+     * Deprecated since 1.01. No longer used
      * Reset the chronometer that computes walking time
      */
+    @Deprecated
     private void resetChrono() {
         Timing.setBase(SystemClock.elapsedRealtime());
         pauseOffset = 0;
@@ -103,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         old_nb_step = 0;
         currentTick = 0;
         resetChrono();
+        timeBase = System.currentTimeMillis();
     }
 
 
@@ -251,7 +261,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         Log = (TextView) findViewById(R.id.log);
 
-        Timing = (Chronometer) findViewById(R.id.timer);
+        Timer = findViewById(R.id.timer);
+        Timing = (Chronometer) findViewById(R.id.timing);
         Timing.setFormat("Walked Time: %s");
         Timing.setBase(SystemClock.elapsedRealtime());
 
@@ -285,8 +296,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     //Computing walking time and walking speed
                     startChrono();
                     time = (int)((SystemClock.elapsedRealtime() - Timing.getBase())/1000f)+1;
+                    time2 = (int)((System.currentTimeMillis() - timeBase)/1000f);
+                    Timer.setText("Walking time : " + time_conv(time2));
                     //Speed = Distance / Time. Initially speed is calculated in meters/second, converted to kilometers/hour by multiplying with 3.6
-                    speed = (dist / (float)time) * 3.6;
+                    speed = (dist / (float)time2) * 3.6;
                     if (speed <= SPEED_THRESHOLD)
                         Speed.setText("Walking speed : " + speed_conv(speed));
                     else
@@ -323,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             //dbLock to make sure only one instance of data is computed during a record
                             if (!dbLock) {
                                 if (speed <= SPEED_THRESHOLD) {
-                                    boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time), speed_conv(speed));
+                                    boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time2), speed_conv(speed));
                                     if (insertData) {
                                         Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
                                     } else {

@@ -49,11 +49,19 @@
         android:layout_height="wrap_content"
         android:gravity="center" />
 
-    <Chronometer
+    <TextView
         android:id="@+id/timer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center" />
+
+    <Chronometer
+        android:id="@+id/timing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:visibility="gone"
+        tools:visibility="gone" />
 
     <TextView
         android:id="@+id/speed"
