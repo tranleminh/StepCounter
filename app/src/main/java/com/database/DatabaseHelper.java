@@ -27,31 +27,74 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + RecordTab.Record.TABLE_NAME;
 
+
+    /***********************CONSTRUCTOR**************************/
+
+    /**
+     * The DatabaseHelper constructor.
+     * Database name and version are provided in MainActivity
+     * @param context
+     */
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    /************************METHODS****************************/
+
+    /**
+     * Execute a SQL query then store the results in a cursor
+     * @return a Cursor containing data to be displayed
+     */
     public Cursor showData() {
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor data = db.rawQuery("SELECT * FROM " + RecordTab.Record.TABLE_NAME, null);
         return data;
     }
 
+    /**
+     * Overridden method of onCreate().
+     * The CREATE TABLE command, stored in a constant String variable,
+     * is executed here.
+     * @param db
+     */
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_ENTRIES);
     }
 
+    /**
+     * Overridden method of onUpgrade()
+     * @param db
+     * @param oldVersion
+     * @param newVersion
+     */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL(SQL_DELETE_ENTRIES);
         onCreate(db);
     }
 
+    /**
+     * Overridden method of onDowngrade
+     * @param db
+     * @param oldVersion
+     * @param newVersion
+     */
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
     }
 
+    /**
+     * Method used to add data into the database
+     * @param date a String containing the current date
+     * @param starttime a String containing the start time
+     * @param endtime a String containing the end time
+     * @param steps a String containing the total number of steps walked during a period
+     * @param distance a String containing the walked distance
+     * @param duration a String containing the walked duration
+     * @param avgspeed a String containing the average speed calculated
+     * @return a boolean indicating the data insert status
+     */
     public boolean addData(String date, String starttime, String endtime, String steps, String distance, String duration, String avgspeed) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();

@@ -1,11 +1,7 @@
-package com.functionality.stepcounter;
+package com.functionality;
 
 import android.app.AlertDialog;
-import android.content.ContentValues;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -21,36 +17,27 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.database.DatabaseHelper;
-import com.functionality.stepdetector.*;
+import com.functionality.stepcounter.R;
 
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import static com.database.RecordTab.Record.COL2;
-import static com.database.RecordTab.Record.COL3;
-import static com.database.RecordTab.Record.COL4;
-import static com.database.RecordTab.Record.COL5;
-import static com.database.RecordTab.Record.COL6;
-import static com.database.RecordTab.Record.COL7;
-import static com.database.RecordTab.Record.COL8;
-import static com.database.RecordTab.Record.TABLE_NAME;
-import static com.database.RecordTab.Record._ID;
 
-
-public class MainActivity extends AppCompatActivity implements SensorEventListener, com.listener.StepListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, StepListener {
 
     /**********Attributes and global variables are declared here***************/
+    private static final String TEXT_NUM_STEPS = "Number of Steps: ";
+    private static final int SPEED_THRESHOLD = 6;
 
-    private TextView textView;
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
     private Sensor accel;
-    private static final String TEXT_NUM_STEPS = "Number of Steps: ";
+
     private int numSteps = 0;
     private int currentTick = 0;
-    private int maxTick = 3;
+    private static final int maxTick = 3;
     private int old_nb_step = 0;
     private double dist = 0;
     private int time = 0;
@@ -71,16 +58,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean dateLock = false;
     private boolean dbLock = true;
     private Button BtnViewData;
-    DatabaseHelper recordDB;
+    private DatabaseHelper recordDB;
 
 
     /******Methods relative to step counter's walking data management*******/
 
-
-    /***********************************************************************
-     METHOD startChrono() : start the chronometer that computes walking time
-     ***********************************************************************/
-    public void startChrono() {
+    /**
+     * Start the chronometer that computes walking time
+     */
+    private void startChrono() {
         if (!running) {
             Timing.setBase(SystemClock.elapsedRealtime() - pauseOffset);
             Timing.start();
@@ -88,10 +74,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    /***********************************************************************
-     METHOD stopChrono() : stop the chronometer that computes walking time
-     ***********************************************************************/
-    public void stopChrono() {
+    /**
+     * Stop the chronometer that computes walking time
+     */
+    private void stopChrono() {
         if (running) {
             Timing.stop();
             pauseOffset = SystemClock.elapsedRealtime() - Timing.getBase();
@@ -99,17 +85,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    /***********************************************************************
-     METHOD resetChrono() : reset the chronometer that computes walking time
-     ***********************************************************************/
-    public void resetChrono() {
+    /**
+     * Reset the chronometer that computes walking time
+     */
+    private void resetChrono() {
         Timing.setBase(SystemClock.elapsedRealtime());
         pauseOffset = 0;
     }
 
-    /***********************************************************************
-     METHOD resetAll() : reset to 0 all measuring data and reset chronometer
-     ***********************************************************************/
+    /**
+     * Reset to 0 all measuring data and reset chronometer
+     */
     private void resetAll() {
         numSteps = 0;
         dist = 0;
@@ -122,9 +108,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     /************************Private methods relative to unit conversion***************************/
 
-    /***********************************************************************************************
-     METHOD time_conv() : converts a given time in seconds into a string of hours, minutes, seconds.
-     ***********************************************************************************************/
+    /**
+     * Converts a given time in seconds into a string of hours, minutes, seconds.
+     * @param time the time given in seconds
+     * @return     a String containing time in hours, minutes, seconds
+     */
     private String time_conv(int time) {
         String res = "";
         int s = time;
@@ -152,9 +140,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return res;
     }
 
-    /***********************************************************************************
-     METHOD dist_conv() : converts a given distance in meters into kilometers if needed.
-     ***********************************************************************************/
+    /**
+     * Converts a given distance in meters into kilometers if needed.
+     * @param dist a distance in meters
+     * @return     a String containing distance in meters or kilometers
+     */
     private String dist_conv(double dist) {
         String res = "";
         if (dist < 1000) {
@@ -166,9 +156,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return res;
     }
 
-    /**************************************************************
-     METHOD speed_conv() : converts a given speed into proper form.
-     **************************************************************/
+    /**
+     * Round up or round down the given speed to the nearest integer value.
+     * @param speed a given speed
+     * @return      a String containing its value rounded up or down to the nearest integer value
+     */
     private String speed_conv(double speed) {
         String res = "";
         if (speed - (int)speed >= 0.5) {
@@ -183,9 +175,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     /****************Methods relative to database's manipulation*****************/
 
-    /*****************************************************************************
-    METHOD viewData() : display the database by pressing the "View Record" button
-     *****************************************************************************/
+    /**
+     * Display the database by pressing the "View Record" button
+     */
     public void viewData() {
         BtnViewData.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -213,9 +205,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
-    /****************************************************************************************************************************
-    METHOD display() : an auxiliary method used in viewData(). This method creates an alert dialog to show database' stored data.
-    ****************************************************************************************************************************/
+    /**
+     * an auxiliary method used in viewData().
+     * This method creates an alert dialog to show database' stored data.
+     * @param title the title of the alert dialog
+     * @param message the message to be delivered
+     */
     public void display(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -229,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     /****************Main Android methods' implementation*****************/
 
     /**
-     *
+     * The overridden method of onCreate()
      * @param savedInstanceState
      */
     @Override
@@ -292,7 +287,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     time = (int)((SystemClock.elapsedRealtime() - Timing.getBase())/1000f)+1;
                     //Speed = Distance / Time. Initially speed is calculated in meters/second, converted to kilometers/hour by multiplying with 3.6
                     speed = (dist / (float)time) * 3.6;
-                    Speed.setText("Walking speed : " + speed_conv(speed));
+                    if (speed <= SPEED_THRESHOLD)
+                        Speed.setText("Walking speed : " + speed_conv(speed));
+                    else
+                        Speed.setText("No data on moving speed");
 
                     //Updating old number of steps
                     old_nb_step = numSteps;
@@ -324,13 +322,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                             //dbLock to make sure only one instance of data is computed during a record
                             if (!dbLock) {
-                                boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time), speed_conv(speed));
-                                if (insertData) {
-                                    Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
-                                } else {
-                                    Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
+                                if (speed <= SPEED_THRESHOLD) {
+                                    boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time), speed_conv(speed));
+                                    if (insertData) {
+                                        Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
+                                    } else {
+                                        Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
+                                    }
+                                    dbLock = true;
                                 }
-                                dbLock = true;
+                                else {
+                                    boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), "Unknown duration", "Unknown speed");
+                                    if (insertData) {
+                                        Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
+                                    } else {
+                                        Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
+                                    }
+                                    dbLock = true;
+                                }
                             }
 
                             //reset all measurements at the end of the record
@@ -383,10 +392,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    /**
+     * Overridden method of onAccuracyChanged().
+     * @param sensor
+     * @param accuracy
+     */
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
+    /**
+     * Overriden method of onSensorChanged().
+     * The timestamp and the values are updated here, during the step detection.
+     * @param event
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -395,6 +414,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    /**
+     * Overridden method declared in StepListener interface.
+     * This method updates total number of steps, as well as
+     * the walked distance.
+     * @param timeNs the maximum delay of the step detector's
+     *               processing.
+     */
     @Override
     public void step(long timeNs){
         numSteps++;

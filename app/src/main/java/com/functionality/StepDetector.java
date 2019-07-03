@@ -1,6 +1,7 @@
-package com.functionality.stepdetector;
+package com.functionality;
 
-import com.functionality.accelero.*;
+import com.functionality.SensorFilter;
+import com.functionality.StepListener;
 
 public class StepDetector {
 
@@ -21,9 +22,9 @@ public class StepDetector {
     private long lastStepTimeNs = 0;
     private float oldVelocityEstimate = 0;
 
-    private com.listener.StepListener listener;
+    private StepListener listener;
 
-    public void registerListener(com.listener.StepListener listener) {
+    public void registerListener(StepListener listener) {
         this.listener = listener;
     }
 

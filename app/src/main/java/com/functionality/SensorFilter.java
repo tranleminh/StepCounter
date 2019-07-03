@@ -1,4 +1,4 @@
-package com.functionality.accelero;
+package com.functionality;
 
 public class SensorFilter {
 
