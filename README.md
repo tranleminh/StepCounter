@@ -14,7 +14,7 @@ There are three buttons on the UI : Start, Stop and View Record
 - The View Record button is used to display all the recorded data.
 
 # Functionalities by version :
-1.00 :
+1.01 :
 - Steps are detected using smartphone's accelerometer with a sensivity of 50.0
 - Distance is computed by multiplying the number of steps with a step's average length of 75cm.
 - Maximum delay of stopping walking is 3 seconds
