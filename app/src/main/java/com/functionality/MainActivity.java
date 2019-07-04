@@ -15,8 +15,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 import com.database.DatabaseHelper;
+import com.functionality.stepcounter.FragmentAdapter;
 import com.functionality.stepcounter.R;
 
 
@@ -27,9 +31,14 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, StepListener {
 
+
+
     /**********Attributes and global variables are declared here***************/
+    private ViewPager viewPager;
+    private FragmentAdapter adapter;
+
     private static final String TEXT_NUM_STEPS = "Number of Steps: ";
-    private static final int SPEED_THRESHOLD = 20;
+    //private static final int SPEED_THRESHOLD = 20;
 
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
@@ -53,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean running = false;
     private TextView Speed;
     private double speed = 0;
+    private double avgspeed = 0;
     private Date start;
     private Date end;
     private boolean dateLock = false;
@@ -151,10 +161,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     /**
+     * Deprecated since 1.02. Distance is no longer computed
      * Converts a given distance in meters into kilometers if needed.
      * @param dist a distance in meters
      * @return     a String containing distance in meters or kilometers
      */
+    @Deprecated
     private String dist_conv(double dist) {
         String res = "";
         if (dist < 1000) {
@@ -167,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     /**
+     * From 1.02, speed is calculated as step per minutes
      * Round up or round down the given speed to the nearest integer value.
      * @param speed a given speed
      * @return      a String containing its value rounded up or down to the nearest integer value
@@ -174,10 +187,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private String speed_conv(double speed) {
         String res = "";
         if (speed - (int)speed >= 0.5) {
-            res += ((int)speed + 1) + "km/h";
+            res += ((int)speed + 1) + " steps/min";
         }
         else {
-            res += (int)speed + "km/h";
+            res += (int)speed + " steps/min";
         }
         return res;
     }
@@ -242,6 +255,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Pager
+        viewPager = findViewById(R.id.pager);
+        adapter = new FragmentAdapter(getSupportFragmentManager());
+        viewPager.setAdapter(adapter);
+
         //Instantiate the database
         recordDB = new DatabaseHelper(this);
 
@@ -298,12 +316,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     time = (int)((SystemClock.elapsedRealtime() - Timing.getBase())/1000f)+1;
                     time2 = (int)((System.currentTimeMillis() - timeBase)/1000f);
                     Timer.setText("Walking time : " + time_conv(time2));
-                    //Speed = Distance / Time. Initially speed is calculated in meters/second, converted to kilometers/hour by multiplying with 3.6
-                    speed = (dist / (float)time2) * 3.6;
-                    if (speed <= SPEED_THRESHOLD)
-                        Speed.setText("Walking speed : " + speed_conv(speed));
-                    else
-                        Speed.setText("No data on moving speed");
+                    //From 1.02, speed is calculated as steps per min
+                    //speed = (dist / (float)time2) * 3.6;
+                    speed = (numSteps - old_nb_step) * 60;
+                    avgspeed = (numSteps / (float)time2) * 60;
+                    //if (speed <= SPEED_THRESHOLD)
+                    Speed.setText("Walking frequency : " + speed_conv(speed));
+                    //else
+                    //Speed.setText("No data on moving speed");
 
                     //Updating old number of steps
                     old_nb_step = numSteps;
@@ -335,16 +355,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                             //dbLock to make sure only one instance of data is computed during a record
                             if (!dbLock) {
-                                if (speed <= SPEED_THRESHOLD) {
-                                    boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time2), speed_conv(speed));
-                                    if (insertData) {
-                                        Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
-                                    } else {
-                                        Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
-                                    }
-                                    dbLock = true;
+                                //if (speed <= SPEED_THRESHOLD) {
+                                boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), time_conv(time2), speed_conv(avgspeed));
+                                if (insertData) {
+                                    Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
                                 }
-                                else {
+                                dbLock = true;
+                                //}
+                                /*else {
                                     boolean insertData = recordDB.addData(date.format(start), df.format(start), df.format(end), Integer.toString(numSteps), dist_conv(dist), "Unknown duration", "Unknown speed");
                                     if (insertData) {
                                         Toast.makeText(MainActivity.this, "New Data Inserted!", Toast.LENGTH_LONG).show();
@@ -352,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                         Toast.makeText(MainActivity.this, "Failed to insert new data", Toast.LENGTH_LONG).show();
                                     }
                                     dbLock = true;
-                                }
+                                }*/
                             }
 
                             //reset all measurements at the end of the record
@@ -383,7 +403,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
                 startChrono();
                 TvSteps.setText(TEXT_NUM_STEPS + numSteps);
-                Distance.setText("Walked distance : " + dist + "m");
+                //Distance.setText("Walked distance : " + dist + "m");
 
                 sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 
@@ -440,14 +460,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Status.setText("Counter started");
 
         //Walking distance calculation by multiplying a step with an average value of 75cm per step
-        dist = numSteps * 0.75;
+        //dist = numSteps * 0.75;
         TvSteps.setText(TEXT_NUM_STEPS + numSteps);
-        if (dist <= 1000) {
+        /*if (dist <= 1000) {
             Distance.setText("Walked distance : " + dist + "m");
         }
         else {
             Distance.setText("Walked distance : " + dist / 1000f + "km");
-        }
+        }*/
     }
 
 
