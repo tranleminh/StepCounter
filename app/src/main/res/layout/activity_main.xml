@@ -4,7 +4,8 @@
     android:orientation="vertical"
     android:gravity="center"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:keepScreenOn="true">
 
 
 
@@ -47,7 +48,9 @@
         android:id="@+id/distance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center" />
+        android:gravity="center"
+        android:visibility="gone"
+        tools:visibility="gone" />
 
     <TextView
         android:id="@+id/timer"
@@ -74,19 +77,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:visibility="gone"
-        tools:visibility="gone" />
+        android:visibility="visible"
+        tools:visibility="visible" />
 
     <Chronometer
         android:id="@+id/clk"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:visibility="gone" />
-
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/pager"
-        android:layout_width="match_parent"
-        android:layout_height="45dp" />
+        android:visibility="visible"
+        tools:visibility="visible" />
 
 </LinearLayout>
